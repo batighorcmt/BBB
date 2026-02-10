@@ -121,9 +121,10 @@ class RolePermissionSeeder extends Seeder
         // Create Demo Users
         
         // Super Admin
-        $admin = User::create([
-            'name' => 'Super Admin',
+        $admin = User::updateOrCreate([
             'email' => 'admin@example.com',
+        ], [
+            'name' => 'Super Admin',
             'phone' => '01700000000',
             'password' => Hash::make('password'),
             'status' => 'active',
@@ -131,9 +132,10 @@ class RolePermissionSeeder extends Seeder
         $admin->assignRole('super_admin');
 
         // Manager
-        $managerUser = User::create([
-            'name' => 'Manager',
+        $managerUser = User::updateOrCreate([
             'email' => 'manager@example.com',
+        ], [
+            'name' => 'Manager',
             'phone' => '01700000001',
             'password' => Hash::make('password'),
             'status' => 'active',
@@ -141,9 +143,10 @@ class RolePermissionSeeder extends Seeder
         $managerUser->assignRole('manager');
 
         // Marketing Officer
-        $marketingUser = User::create([
-            'name' => 'Marketing Officer',
+        $marketingUser = User::updateOrCreate([
             'email' => 'marketing@example.com',
+        ], [
+            'name' => 'Marketing Officer',
             'phone' => '01700000002',
             'password' => Hash::make('password'),
             'status' => 'active',
@@ -151,9 +154,10 @@ class RolePermissionSeeder extends Seeder
         $marketingUser->assignRole('marketing_officer');
 
         // Staff
-        $staffUser = User::create([
-            'name' => 'Staff Member',
+        $staffUser = User::updateOrCreate([
             'email' => 'staff@example.com',
+        ], [
+            'name' => 'Staff Member',
             'phone' => '01700000003',
             'password' => Hash::make('password'),
             'status' => 'active',
@@ -161,9 +165,10 @@ class RolePermissionSeeder extends Seeder
         $staffUser->assignRole('staff');
 
         // Customer
-        $customerUser = User::create([
-            'name' => 'Customer',
+        $customerUser = User::updateOrCreate([
             'email' => 'customer@example.com',
+        ], [
+            'name' => 'Customer',
             'phone' => '01700000004',
             'password' => Hash::make('password'),
             'status' => 'active',

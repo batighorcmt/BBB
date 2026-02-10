@@ -1404,3 +1404,4 @@
 #49 G:/Server2/htdocs/BBB/artisan(16): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
 #50 {main}
 "} 
+[2026-02-10 18:03:46] local.INFO: DemoDataSeeder: inserted demo rows where tables exist.  
