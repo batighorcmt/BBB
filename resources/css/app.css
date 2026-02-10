@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Icon sizing fixes: keep large hero SVGs untouched but limit common UI icons
+	 placed inside navigation, buttons, links and elements using `.icon`. */
+nav svg,
+button svg,
+a > svg,
+.icon svg {
+	width: 1.25rem; /* 20px */
+	height: 1.25rem;
+	max-width: none;
+}
+
+.icon {
+	display: inline-block;
+	width: 1.25rem;
+	height: 1.25rem;
+}

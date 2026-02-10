@@ -1,17 +1,26 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const userRoles = computed(() => page.props.auth.roles || []);
 
 const sidebarOpen = ref(false);
+const sidebarCollapsed = ref(false);
+const userDropdownOpen = ref(false);
 
 // Role-based menu configuration
 const menuItems = computed(() => {
-    const hasRole = (role) => userRoles.value.includes(role);
-    const hasAnyRole = (...roles) => roles.some(role => userRoles.value.includes(role));
+    // Helper function to check for roles
+    // If no roles defined in component, fallback to empty array
+    const roles = userRoles.value || [];
+
+    const hasRole = (role) => roles.includes(role);
+    const hasAnyRole = (...checkRoles) => checkRoles.some(role => roles.includes(role));
+    
+    // Debugging roles
+    console.log('User Roles:', roles);
     
     const items = [];
     
@@ -121,88 +130,163 @@ const menuItems = computed(() => {
         });
     }
     
-    return items.filter(item => !item.roles || item.roles.some(role => userRoles.value.includes(role)));
+    // Filter items based on roles
+    return items.filter(item => {
+        // If item has no specific roles defined, it's visible to everyone (or logic handled above)
+        // If item has roles, check if user has at least one of them
+        if (!item.roles || item.roles.length === 0) return true;
+        return item.roles.some(role => (userRoles.value || []).includes(role));
+    });
 });
 
 const logout = () => {
-    if (confirm('আপনি কি লগআউট করতে চান?')) {
-        router.post(route('logout'));
-    }
+    router.post(route('logout'));
 };
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-        <!-- Sidebar -->
-        <div :class="sidebarOpen ? 'block' : 'hidden'" @click="sidebarOpen = false" class="fixed inset-0 z-20 transition-opacity bg-black opacity-50 lg:hidden"></div>
+    <!-- Main Layout Container - Full Screen Flex -->
+    <div class="flex h-screen w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
         
-        <div :class="sidebarOpen ? 'translate-x-0 ease-out' : '-translate-x-full ease-in'" class="fixed inset-y-0 left-0 z-30 w-64 overflow-y-auto transition duration-300 transform bg-gray-900 lg:translate-x-0 lg:static lg:inset-0">
-            <div class="flex items-center justify-center mt-8">
-                <div class="flex items-center">
-                    <span class="mx-2 text-2xl font-semibold text-white">Production MS</span>
-                </div>
+        <!-- Mobile Overlay -->
+        <div v-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-20 bg-black opacity-50 lg:hidden transition-opacity"></div>
+        
+        <!-- Sidebar - Flexible Item -->
+        <aside :class="[
+            'bg-[#00334e] text-white transition-all duration-300 ease-in-out flex flex-col flex-shrink-0',
+            // Mobile: Fixed, overlaid
+            'fixed lg:static inset-y-0 left-0 z-30 h-full',
+            // Mobile transform
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+            // Width based on state
+            sidebarCollapsed ? 'w-20' : 'w-64'
+        ]">
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between h-16 px-4 border-b border-[#00283d] bg-[#00283d]">
+                <div v-show="!sidebarCollapsed" class="text-xl font-bold text-white tracking-wider">Batighor Computers</div>
+                <button @click="sidebarCollapsed = !sidebarCollapsed" class="hidden lg:inline-flex text-gray-300 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
             </div>
 
-            <nav class="mt-10">
+            <!-- Navigation Menu -->
+            <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
                 <template v-for="item in menuItems" :key="item.name">
-                    <!-- Menu with children -->
-                    <div v-if="item.children" class="px-6 py-3">
-                        <div class="flex items-center text-gray-300 hover:text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Menu Group with Children -->
+                    <div v-if="item.children" class="space-y-1">
+                        <!-- Group Header -->
+                        <div v-if="!sidebarCollapsed" class="px-4 py-2 text-xs font-semibold text-cyan-200 uppercase tracking-wider">
+                            {{ item.name }}
+                        </div>
+                         <!-- Icon only for collapsed group header (optional, or just show children) -->
+                        <div v-else class="flex justify-center py-2 text-cyan-200">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"/>
                             </svg>
-                            <span class="mx-3">{{ item.name }}</span>
                         </div>
-                        <div class="ml-8 mt-2 space-y-1">
-                            <Link v-for="child in item.children" :key="child.name" :href="route(child.route)" 
-                                class="block py-2 text-sm text-gray-400 hover:text-white">
-                                {{ child.name }}
+
+                        <div class="space-y-1">
+                            <Link v-for="child in item.children" :key="child.name" :href="route(child.route)"
+                                :class="[
+                                    'flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-[#004062] hover:text-white transition-colors',
+                                    route().current(child.route) ? 'bg-[#004d7a] text-white border-l-4 border-cyan-400' : ''
+                                ]">
+                                <span v-if="sidebarCollapsed" class="w-full text-center" :title="child.name">
+                                     {{ child.name.charAt(0) }}
+                                </span>
+                                <span v-else>{{ child.name }}</span>
                             </Link>
                         </div>
                     </div>
-                    
-                    <!-- Single menu item -->
-                    <Link v-else :href="route(item.route)" 
-                        class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"/>
-                        </svg>
-                        <span class="mx-3">{{ item.name }}</span>
-                    </Link>
+
+                    <!-- Single Menu Item -->
+                    <div v-else>
+                        <Link :href="route(item.route)"
+                            :class="[
+                                'flex items-center px-4 py-2 text-gray-300 rounded-lg hover:bg-[#004062] hover:text-white transition-colors',
+                                route().current(item.route) ? 'bg-[#004d7a] text-white border-l-4 border-cyan-400' : '',
+                                sidebarCollapsed ? 'justify-center' : ''
+                            ]">
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"/>
+                            </svg>
+                            <span v-show="!sidebarCollapsed" class="ml-3 font-medium">{{ item.name }}</span>
+                        </Link>
+                    </div>
                 </template>
             </nav>
-        </div>
+        </aside>
 
-        <!-- Main Content -->
-        <div class="flex flex-col flex-1 lg:ml-64">
-            <!-- Top Navigation -->
-            <header class="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+        <!-- Main Content - Takes remaining space -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            
+            <!-- Header -->
+            <header class="h-16 bg-[#00334e] border-b border-[#00283d] flex items-center justify-between px-6 flex-shrink-0 shadow-md">
+                
+                <!-- Left Side: Mobile Hamburger & Title/Breadcrumbs -->
                 <div class="flex items-center">
-                    <button @click="sidebarOpen = true" class="text-gray-500 focus:outline-none lg:hidden">
+                     <button @click="sidebarOpen = true" class="lg:hidden text-gray-300 hover:text-white focus:outline-none mr-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
+                    <!-- Optional: Add page title here for mobile if needed -->
+                    <h1 class="text-xl font-bold text-white hidden sm:block" v-if="$page.props.header">{{ $page.props.header }}</h1>
                 </div>
-
-                <div class="flex items-center">
+                
+                <!-- Right Side: User Menu -->
+                
+                <!-- User Menu (Right) -->
+                <div class="flex items-center space-x-4">
                     <div class="relative">
-                        <button class="flex items-center text-gray-700 dark:text-gray-200 focus:outline-none">
-                            <span class="mx-2">{{ user.name }}</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        <button @click="userDropdownOpen = !userDropdownOpen" 
+                            class="flex items-center space-x-2 text-gray-200 hover:text-white focus:outline-none">
+                            <span class="font-medium">{{ user.name }}</span>
+                            <svg :class="['w-5 h-5 transition-transform', userDropdownOpen ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                             </svg>
                         </button>
+
+                        <!-- Dropdown Menu -->
+                        <div v-if="userDropdownOpen" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                            <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-600">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate" :title="user.email">{{ user.name }}</p>
+                            </div>
+                            
+                            <!-- Account Management -->
+                             <Link :href="route('profile.edit')" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                Profile
+                            </Link>
+
+                            <button @click="logout" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                Log Out
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
 
+            <!-- Page Heading -->
+            <header class="bg-white dark:bg-gray-800 shadow relative z-10" v-if="$slots.header">
+                <div class="w-full mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    <slot name="header" />
+                </div>
+            </header>
+
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900">
-                <div class="container mx-auto px-6 py-8">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto">
+                <div class="w-full">
                     <slot />
                 </div>
             </main>
+
         </div>
+
     </div>
 </template>
