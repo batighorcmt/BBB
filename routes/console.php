@@ -1,0 +1,1 @@
+<?php\n\nuse Illuminate\\Foundation\\Inspiring;\nuse Illuminate\\Support\\Facades\\Artisan;\n\nArtisan::command('inspire', function () {\n    ->comment(Inspiring::quote());\n})->describe('Display an inspiring quote');\n

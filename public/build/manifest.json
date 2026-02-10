@@ -1,0 +1,42 @@
+{
+  "_AuthenticatedLayout-B7T2D85l.js": {
+    "file": "assets/AuthenticatedLayout-B7T2D85l.js",
+    "name": "AuthenticatedLayout",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/Pages/ComingSoon.vue": {
+    "file": "assets/ComingSoon-CCB7nYc_.js",
+    "name": "ComingSoon",
+    "src": "resources/js/Pages/ComingSoon.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_AuthenticatedLayout-B7T2D85l.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/Pages/Dashboard.vue": {
+    "file": "assets/Dashboard-C0mg88kH.js",
+    "name": "Dashboard",
+    "src": "resources/js/Pages/Dashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_AuthenticatedLayout-B7T2D85l.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-ChFFp3dP.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/ComingSoon.vue",
+      "resources/js/Pages/Dashboard.vue"
+    ],
+    "css": [
+      "assets/app-C6G_3qQV.css"
+    ]
+  }
+}
