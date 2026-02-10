@@ -59,17 +59,17 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission], ['guard_name' => 'web']);
         }
 
         // Create Roles and Assign Permissions
         
         // 1. Super Admin - Full Access
-        $superAdmin = Role::create(['name' => 'super_admin']);
+        $superAdmin = Role::firstOrCreate(['name' => 'super_admin'], ['guard_name' => 'web']);
         $superAdmin->givePermissionTo(Permission::all());
 
         // 2. Manager - Most Permissions except role management
-        $manager = Role::create(['name' => 'manager']);
+        $manager = Role::firstOrCreate(['name' => 'manager'], ['guard_name' => 'web']);
         $manager->givePermissionTo([
             'view_dashboard',
             'view_employees', 'create_employees', 'edit_employees',
@@ -90,7 +90,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // 3. Marketing Officer - Sales, Quotations, Payment Collection
-        $marketing = Role::create(['name' => 'marketing_officer']);
+        $marketing = Role::firstOrCreate(['name' => 'marketing_officer'], ['guard_name' => 'web']);
         $marketing->givePermissionTo([
             'view_dashboard',
             'view_customers',
@@ -102,7 +102,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // 4. Staff - Limited Access
-        $staff = Role::create(['name' => 'staff']);
+        $staff = Role::firstOrCreate(['name' => 'staff'], ['guard_name' => 'web']);
         $staff->givePermissionTo([
             'view_dashboard',
             'mark_attendance',
@@ -111,7 +111,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // 5. Customer - View Own Orders
-        $customer = Role::create(['name' => 'customer']);
+        $customer = Role::firstOrCreate(['name' => 'customer'], ['guard_name' => 'web']);
         $customer->givePermissionTo([
             'view_dashboard',
             'view_quotations',

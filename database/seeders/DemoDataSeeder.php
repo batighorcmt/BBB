@@ -11,38 +11,47 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // Categories
+        // Categories (idempotent)
+        $categoryId = null;
         if (Schema::hasTable('categories')) {
-            $categoryId = DB::table('categories')->insertGetId([
-                'name' => 'General',
-                'code' => 'GEN',
-                'description' => 'General category',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $categoryId = null;
+            $category = DB::table('categories')->where('code', 'GEN')->first();
+            if ($category) {
+                $categoryId = $category->id;
+            } else {
+                $categoryId = DB::table('categories')->insertGetId([
+                    'name' => 'General',
+                    'code' => 'GEN',
+                    'description' => 'General category',
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         // Items
+        // Items (idempotent)
+        $itemId = null;
         if (Schema::hasTable('items')) {
-            $itemId = DB::table('items')->insertGetId([
-                'category_id' => $categoryId,
-                'item_code' => 'ITEM-001',
-                'name' => 'Sample Item',
-                'type' => 'finished_good',
-                'unit' => 'pcs',
-                'purchase_price' => 10.00,
-                'sale_price' => 15.00,
-                'reorder_level' => 5,
-                'description' => 'A demo item',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $itemId = null;
+            $existingItem = DB::table('items')->where('item_code', 'ITEM-001')->first();
+            if ($existingItem) {
+                $itemId = $existingItem->id;
+            } else {
+                $itemId = DB::table('items')->insertGetId([
+                    'category_id' => $categoryId,
+                    'item_code' => 'ITEM-001',
+                    'name' => 'Sample Item',
+                    'type' => 'finished_good',
+                    'unit' => 'pcs',
+                    'purchase_price' => 10.00,
+                    'sale_price' => 15.00,
+                    'reorder_level' => 5,
+                    'description' => 'A demo item',
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         // Stocks
@@ -55,34 +64,38 @@ class DemoDataSeeder extends Seeder
 
         // Customers
         if (Schema::hasTable('customers')) {
-            DB::table('customers')->insert([
-                'customer_code' => 'CUST-001',
-                'name' => 'Demo Customer',
-                'company_name' => 'Demo Co',
-                'phone' => '01710000000',
-                'email' => 'demo.customer@example.com',
-                'address' => 'Demo address',
-                'credit_limit' => 0,
-                'opening_balance' => 0,
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            DB::table('customers')->updateOrInsert(
+                ['customer_code' => 'CUST-001'],
+                [
+                    'name' => 'Demo Customer',
+                    'company_name' => 'Demo Co',
+                    'phone' => '01710000000',
+                    'email' => 'demo.customer@example.com',
+                    'address' => 'Demo address',
+                    'credit_limit' => 0,
+                    'opening_balance' => 0,
+                    'status' => 'active',
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
         }
 
         // Employees
         if (Schema::hasTable('employees')) {
-            DB::table('employees')->insert([
-                'employee_code' => 'EMP-001',
-                'name' => 'Demo Employee',
-                'phone' => '01720000000',
-                'email' => 'demo.employee@example.com',
-                'designation' => 'Staff',
-                'salary' => 0,
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            DB::table('employees')->updateOrInsert(
+                ['employee_code' => 'EMP-001'],
+                [
+                    'name' => 'Demo Employee',
+                    'phone' => '01720000000',
+                    'email' => 'demo.employee@example.com',
+                    'designation' => 'Staff',
+                    'salary' => 0,
+                    'status' => 'active',
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
         }
 
         // Helpful notice in logs
