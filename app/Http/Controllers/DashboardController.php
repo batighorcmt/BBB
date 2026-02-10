@@ -13,10 +13,10 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'totalSales' => Sale::count(),
-            'pendingOrders' => Sale::where('status', 'pending')->count(),
-            'totalCustomers' => Customer::count(),
-            'lowStockItems' => Stock::whereRaw('quantity <= 10')->count(),
+            'totalSales' => method_exists(Sale::class, 'count') ? Sale::count() : 0,
+            'pendingOrders' => method_exists(Sale::class, 'where') ? Sale::where('status', 'pending')->count() : 0,
+            'totalCustomers' => method_exists(Customer::class, 'count') ? Customer::count() : 0,
+            'lowStockItems' => method_exists(Stock::class, 'whereRaw') ? Stock::whereRaw('quantity <= 10')->count() : 0,
         ];
 
         return Inertia::render('Dashboard', [

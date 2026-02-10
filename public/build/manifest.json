@@ -1,42 +1,52 @@
 {
-  "_AuthenticatedLayout-B7T2D85l.js": {
-    "file": "assets/AuthenticatedLayout-B7T2D85l.js",
+  "_AuthenticatedLayout-CkKyPvno.js": {
+    "file": "assets/AuthenticatedLayout-CkKyPvno.js",
     "name": "AuthenticatedLayout",
     "imports": [
       "resources/js/app.js"
     ]
   },
+  "resources/js/Pages/Auth/Login.vue": {
+    "file": "assets/Login-QXW4qEhu.js",
+    "name": "Login",
+    "src": "resources/js/Pages/Auth/Login.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
   "resources/js/Pages/ComingSoon.vue": {
-    "file": "assets/ComingSoon-CCB7nYc_.js",
+    "file": "assets/ComingSoon-Co0qAVX8.js",
     "name": "ComingSoon",
     "src": "resources/js/Pages/ComingSoon.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-B7T2D85l.js",
+      "_AuthenticatedLayout-CkKyPvno.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/Pages/Dashboard.vue": {
-    "file": "assets/Dashboard-C0mg88kH.js",
+    "file": "assets/Dashboard-C80H-QLA.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Dashboard.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-B7T2D85l.js",
+      "_AuthenticatedLayout-CkKyPvno.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-ChFFp3dP.js",
+    "file": "assets/app-DGR-Hkxg.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
+      "resources/js/Pages/Auth/Login.vue",
       "resources/js/Pages/ComingSoon.vue",
       "resources/js/Pages/Dashboard.vue"
     ],
     "css": [
-      "assets/app-C6G_3qQV.css"
+      "assets/app-9kAGc0BN.css"
     ]
   }
 }
