@@ -142,7 +142,8 @@ const deleteCustomer = (id) => {
                                             <span class="px-2 py-1 bg-gray-200 rounded text-xs text-gray-700 font-bold" v-if="!customer.credit_limit || customer.credit_limit == 0">No Limit</span>
                                             <span v-else>{{ customer.credit_limit }}</span>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">{{ customer.opening_balance || '0.00' }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 shadow-inner font-bold text-red-600 bg-red-50" v-if="parseFloat(customer.current_balance) > 0">{{ customer.current_balance }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700" v-else>{{ customer.current_balance || '0.00' }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">0.00</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">0.00</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-200 dark:border-gray-700 text-center">

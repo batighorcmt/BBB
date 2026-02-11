@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Production;
 use App\Models\ProductionItem;
 use App\Models\Quotation;
+use App\Helpers\IdGenerator;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -12,14 +13,22 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $productions = Production::with(['quotation.customer', 'creator'])
-            ->latest()
-            ->paginate(10);
+        $query = Production::with(['quotation.customer', 'creator']);
+
+        if ($request->search) {
+            $query->where('production_no', 'like', "%{$request->search}%")
+                  ->orWhereHas('quotation.customer', function($q) use ($request) {
+                      $q->where('name', 'like', "%{$request->search}%");
+                  });
+        }
+
+        $productions = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Production/Index', [
             'productions' => $productions,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -65,8 +74,10 @@ class ProductionController extends Controller
             $quotation = Quotation::findOrFail($validated['quotation_id']);
             
             // 1. Create Production
+            $productionNo = IdGenerator::generate(Production::class, 'production_no', 'PROD-');
+            
             $production = Production::create([
-                'production_no' => 'PROD-' . time(),
+                'production_no' => $productionNo,
                 'quotation_id' => $validated['quotation_id'],
                 'status' => $validated['status'], // Default pending? User said default pending in list.
                 'total_cost' => $request->total_cost ?? 0,
@@ -191,6 +202,34 @@ class ProductionController extends Controller
              DB::rollBack();
              return back()->withErrors(['error' => 'Update failed: ' . $e->getMessage()]);
          }
+    }
+
+    public function updateStatus(Request $request, Production $production)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:pending,working,completed,cancelled',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $production->update(['status' => $validated['status']]);
+
+            // Update Quotation Status
+            $quotation = $production->quotation;
+            if ($production->status === 'completed') {
+                $quotation->update(['status' => 'production_ready']);
+            } elseif ($production->status === 'cancelled') {
+                $quotation->update(['status' => 'pending']);
+            } else {
+                $quotation->update(['status' => 'working']);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Status updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Status update failed: ' . $e->getMessage()]);
+        }
     }
 
     public function destroy(Production $production)

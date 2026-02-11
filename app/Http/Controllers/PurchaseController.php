@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Payment;
+use App\Helpers\IdGenerator;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -13,14 +14,22 @@ use Illuminate\Support\Facades\Auth;
 
 class PurchaseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $purchases = Purchase::with(['supplier', 'creator'])
-            ->latest()
-            ->paginate(10);
+        $query = Purchase::with(['supplier', 'creator']);
+
+        if ($request->search) {
+            $query->where('purchase_no', 'like', "%{$request->search}%")
+                  ->orWhereHas('supplier', function($q) use ($request) {
+                      $q->where('name', 'like', "%{$request->search}%");
+                  });
+        }
+
+        $purchases = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Purchases/Index', [
             'purchases' => $purchases,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -91,8 +100,9 @@ class PurchaseController extends Controller
             $status = $due <= 0 ? 'completed' : 'pending';
 
             // Create Purchase
+            $purchaseNo = IdGenerator::generate(Purchase::class, 'purchase_no', 'PUR-');
             $purchase = Purchase::create([
-                'purchase_no' => 'PUR-' . time(), // Simple unique generator
+                'purchase_no' => $purchaseNo,
                 'supplier_id' => $validated['supplier_id'],
                 'purchase_date' => $validated['purchase_date'],
                 'reference_no' => $validated['reference_no'],

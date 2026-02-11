@@ -28,4 +28,9 @@ class ProductionItem extends Model
     {
         return $this->belongsTo(Production::class);
     }
+
+    public function quotationItem()
+    {
+        return $this->belongsTo(QuotationItem::class);
+    }
 }

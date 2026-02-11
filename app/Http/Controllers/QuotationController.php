@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class QuotationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         
@@ -24,11 +24,19 @@ class QuotationController extends Controller
                     $q->where('phone', $user->phone); // Assuming phone links user to customer
                 });
             })
+            ->when($request->search, function ($query, $search) {
+                $query->where('quotation_no', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Quotations/Index', [
             'quotations' => $quotations,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -90,10 +98,8 @@ class QuotationController extends Controller
         DB::beginTransaction();
 
         try {
-            // Auto-generate ID
-            $latest = Quotation::withTrashed()->orderBy('id', 'desc')->first();
-            $nextId = $latest ? $latest->id + 1 : 1;
-            $quotationNo = 'QT-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+            // Auto-generate ID using Helper
+            $quotationNo = \App\Helpers\IdGenerator::generate(Quotation::class, 'quotation_no', 'QT-');
 
             // Calculate totals server-side to be safe
             $subtotal = 0;

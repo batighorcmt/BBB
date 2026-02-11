@@ -58,12 +58,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware(['can:view_sales'])->group(function () {
-        Route::get('/sales', fn() => Inertia::render('ComingSoon', ['module' => 'Sales']))->name('sales.index');
+        Route::resource('sales', \App\Http\Controllers\SaleController::class);
+        Route::get('/api/productions/{id}', [\App\Http\Controllers\SaleController::class, 'getProductionDetails'])->name('api.productions.show');
     });
 
     // Production
     Route::middleware(['can:view_production'])->group(function () {
         Route::resource('production', \App\Http\Controllers\ProductionController::class);
+        Route::patch('/production/{production}/status', [\App\Http\Controllers\ProductionController::class, 'updateStatus'])->name('production.status');
         Route::get('/api/quotations/{id}', [\App\Http\Controllers\ProductionController::class, 'getQuotationDetails'])->name('api.quotations.show');
     });
 

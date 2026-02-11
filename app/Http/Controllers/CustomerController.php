@@ -117,6 +117,20 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
     }
 
+    public function show(Customer $customer)
+    {
+        $customer->load('user');
+        
+        $sales = \App\Models\Sale::where('customer_id', $customer->id)
+            ->latest()
+            ->paginate(10);
+            
+        return Inertia::render('Customers/Show', [
+            'customer' => $customer,
+            'sales' => $sales,
+        ]);
+    }
+
     public function destroy(Customer $customer)
     {
         $customer->delete();
