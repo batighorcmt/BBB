@@ -83,6 +83,7 @@ const getStatusColor = (status) => {
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">{{ prod.creator?.name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <Link :href="route('production.show', prod.id)" class="text-blue-600 hover:text-blue-900 mr-3">View</Link>
                                             <Link :href="route('production.edit', prod.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</Link>
                                             <button @click="deleteProduction(prod.id)" class="text-red-600 hover:text-red-900">Delete</button>
                                         </td>

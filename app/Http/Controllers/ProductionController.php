@@ -116,6 +116,14 @@ class ProductionController extends Controller
         }
     }
 
+    public function show(Production $production)
+    {
+        $production->load(['items', 'quotation.customer', 'creator']);
+        return Inertia::render('Production/Show', [
+            'production' => $production,
+        ]);
+    }
+
     public function edit(Production $production)
     {
         $production->load(['items', 'quotation.customer']);

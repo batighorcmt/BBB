@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const props = defineProps({
     quotations: Array,
@@ -10,7 +11,7 @@ const props = defineProps({
 
 const form = useForm({
     quotation_id: '',
-    production_date: new Date().toISOString().substr(0, 10),
+    production_date: new Date().toISOString().slice(0, 10),
     status: 'pending', // Default pending
     items: [],
     total_cost: 0,
@@ -55,18 +56,11 @@ const onQuotationSelect = async () => {
         calculateTotals();
     } catch (error) {
         console.error("Error fetching quotation:", error);
-        alert("Failed to load quotation details.");
+        Swal.fire('Error', 'Failed to load quotation details.', 'error');
     } finally {
         isLoading.value = false;
     }
 };
-
-// Calculation Logic
-// Per Piece Price = ((EnvWeight * EnvPrice) + (LoopWeight * LoopPrice) + (PrintPrice * Qty) + (SewingCost * Qty)) / Qty
-// Wait... (PrintPrice * Qty) implies PrintPrice is 'Rate'. (SewingCost * Qty) implies SewingCost is 'Rate'.
-// "Print Cost" usually means total for the batch or per piece? 
-// User formula: `(Print Cost * Quantity)` -> This implies the input `Print Cost` is per piece rate.
-// User formula: `(Sewing Cost * Quantity)` -> This implies the input `Sewing Cost` is per piece rate.
 
 const calculateRow = (index) => {
     const item = form.items[index];
@@ -85,8 +79,9 @@ const calculateRow = (index) => {
     
     const totalItemCost = envCost + loopCost + printCostTotal + sewingCostTotal;
     
-    item.price_per_piece = (totalItemCost / qty).toFixed(2);
-    item.total_price = totalItemCost.toFixed(2);
+    // Safeguard against Infinity or NaN
+    item.price_per_piece = isFinite(totalItemCost / qty) ? (totalItemCost / qty).toFixed(2) : 0;
+    item.total_price = isFinite(totalItemCost) ? totalItemCost.toFixed(2) : 0;
     
     calculateTotals();
 };
@@ -111,7 +106,20 @@ const grandTotalInfo = computed(() => {
 });
 
 const submit = () => {
-    form.post(route('production.store'));
+    form.post(route('production.store'), {
+        onError: (errors) => {
+            console.error(errors);
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Please check the form for errors.',
+                footer: Object.values(errors).join('<br>')
+            });
+        },
+        onSuccess: () => {
+             // Success handled by redirect
+        }
+    });
 };
 </script>
 
