@@ -51,7 +51,7 @@ class LoginRequest extends FormRequest
             $field = 'phone';
         }
 
-        if (! Auth::attempt([$field => $login, 'password' => $this->input('password')], $this->boolean('remember'))) {
+        if (! Auth::attempt([$field => $login, 'password' => $this->input('password'), 'status' => 'active'], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

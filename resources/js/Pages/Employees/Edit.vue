@@ -4,6 +4,8 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     employee: Object,
+    roles: Array,
+    userRole: String,
 });
 
 const form = useForm({
@@ -16,6 +18,7 @@ const form = useForm({
     joining_date: props.employee.joining_date,
     address: props.employee.address,
     employment_type: props.employee.employment_type,
+    role: props.userRole || '',
     status: props.employee.status,
 });
 
@@ -88,6 +91,15 @@ const submit = () => {
                                         <option value="daily_wage">Daily Wage</option>
                                     </select>
                                     <div v-if="form.errors.employment_type" class="text-red-500 text-xs mt-1">{{ form.errors.employment_type }}</div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Role <span class="text-red-500">*</span></label>
+                                    <select v-model="form.role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                        <option value="" disabled>Select Role</option>
+                                        <option v-for="role in roles" :key="role.id" :value="role.name">{{ role.name }}</option>
+                                    </select>
+                                    <div v-if="form.errors.role" class="text-red-500 text-xs mt-1">{{ form.errors.role }}</div>
                                 </div>
 
                                 <div>

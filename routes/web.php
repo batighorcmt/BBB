@@ -25,22 +25,77 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // HR Module Routes
-    Route::resource('employees', \App\Http\Controllers\EmployeeController::class);
-    Route::resource('customers', \App\Http\Controllers\CustomerController::class);
-    Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
-    Route::resource('items', \App\Http\Controllers\ItemController::class);
+    Route::middleware(['can:view_employees'])->group(function () {
+        Route::resource('employees', \App\Http\Controllers\EmployeeController::class);
+    });
+    
+    Route::middleware(['can:view_customers'])->group(function () {
+        Route::resource('customers', \App\Http\Controllers\CustomerController::class);
+    });
+    
+    Route::middleware(['can:view_suppliers'])->group(function () {
+        Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+    });
 
-    // Placeholder routes for menu items (to be implemented)
-    Route::get('/categories', fn() => Inertia::render('ComingSoon', ['module' => 'Categories']))->name('categories.index');
-    Route::get('/stocks', fn() => Inertia::render('ComingSoon', ['module' => 'Stock']))->name('stocks.index');
-    Route::resource('purchases', \App\Http\Controllers\PurchaseController::class);
-    Route::get('/quotations', fn() => Inertia::render('ComingSoon', ['module' => 'Quotations']))->name('quotations.index');
-    Route::get('/sales', fn() => Inertia::render('ComingSoon', ['module' => 'Sales']))->name('sales.index');
-    Route::get('/production', fn() => Inertia::render('ComingSoon', ['module' => 'Production']))->name('production.index');
-    Route::get('/payments', fn() => Inertia::render('ComingSoon', ['module' => 'Payments']))->name('payments.index');
-    Route::get('/attendance', fn() => Inertia::render('ComingSoon', ['module' => 'Attendance']))->name('attendance.index');
-    Route::get('/accounts', fn() => Inertia::render('ComingSoon', ['module' => 'Accounts']))->name('accounts.index');
-    Route::get('/reports', fn() => Inertia::render('ComingSoon', ['module' => 'Reports']))->name('reports.index');
+    // Inventory
+    Route::middleware(['can:view_items'])->group(function () {
+        Route::resource('items', \App\Http\Controllers\ItemController::class);
+        Route::get('/categories', fn() => Inertia::render('ComingSoon', ['module' => 'Categories']))->name('categories.index');
+    });
+
+    Route::middleware(['can:view_stock'])->group(function () {
+        Route::get('/stocks', fn() => Inertia::render('ComingSoon', ['module' => 'Stock']))->name('stocks.index');
+    });
+
+    // Purchase
+    Route::middleware(['can:view_purchases'])->group(function () {
+        Route::resource('purchases', \App\Http\Controllers\PurchaseController::class);
+    });
+
+    // Sales
+    Route::middleware(['can:view_quotations'])->group(function () {
+        Route::resource('quotations', \App\Http\Controllers\QuotationController::class);
+    });
+
+    Route::middleware(['can:view_sales'])->group(function () {
+        Route::get('/sales', fn() => Inertia::render('ComingSoon', ['module' => 'Sales']))->name('sales.index');
+    });
+
+    // Production
+    Route::middleware(['can:view_production'])->group(function () {
+        Route::resource('production', \App\Http\Controllers\ProductionController::class);
+        Route::get('/api/quotations/{id}', [\App\Http\Controllers\ProductionController::class, 'getQuotationDetails'])->name('api.quotations.show');
+    });
+
+    // Finance & Accounts
+    Route::middleware(['can:view_payments'])->group(function () {
+        Route::get('/payments', fn() => Inertia::render('ComingSoon', ['module' => 'Payments']))->name('payments.index');
+    });
+
+    Route::middleware(['can:view_transactions'])->group(function () {
+        Route::get('/accounts', fn() => Inertia::render('ComingSoon', ['module' => 'Accounts']))->name('accounts.index');
+    });
+    
+    Route::middleware(['can:view_reports'])->group(function () {
+        Route::get('/reports', fn() => Inertia::render('ComingSoon', ['module' => 'Reports']))->name('reports.index');
+    });
+
+    // Settings & Roles
+    Route::middleware(['role:super_admin'])->group(function () {
+        Route::resource('roles', \App\Http\Controllers\RoleController::class);
+    });
+
+    // Users Management
+    Route::middleware(['can:view_employees'])->group(function () {
+        Route::get('/users', [\App\Http\Controllers\UserController::class, 'index'])->name('users.index');
+        Route::patch('/users/{user}/status', [\App\Http\Controllers\UserController::class, 'updateStatus'])->name('users.status');
+        Route::post('/users/{user}/reset-password', [\App\Http\Controllers\UserController::class, 'resetPassword'])->name('users.reset-password');
+    });
+
+    // Attendance
+    Route::middleware(['can:view_attendance'])->group(function () {
+        Route::get('/attendance', fn() => Inertia::render('ComingSoon', ['module' => 'Attendance']))->name('attendance.index');
+    });
 });
 
 require __DIR__.'/auth.php';

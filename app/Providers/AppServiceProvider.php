@@ -1,1 +1,20 @@
-<?php\n\nnamespace App\\Providers;\n\nuse Illuminate\\Support\\ServiceProvider;\n\nclass AppServiceProvider extends ServiceProvider\n{\n    public function register()\n    {\n        //\n    }\n\n    public function boot()\n    {\n        //\n    }\n}\n
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    public function register()
+    {
+        //
+    }
+
+    public function boot()
+    {
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            return $user->hasRole('super_admin') ? true : null;
+        });
+    }
+}

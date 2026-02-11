@@ -9,18 +9,18 @@ const userRoles = computed(() => page.props.auth.roles || []);
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 const userDropdownOpen = ref(false);
+const userPermissions = computed(() => page.props.auth.permissions || []);
 
 // Role-based menu configuration
 const menuItems = computed(() => {
     // Helper function to check for roles
     // If no roles defined in component, fallback to empty array
     const roles = userRoles.value || [];
+    const permissions = userPermissions.value || [];
 
     const hasRole = (role) => roles.includes(role);
     const hasAnyRole = (...checkRoles) => checkRoles.some(role => roles.includes(role));
-    
-    // Debugging roles
-    console.log('User Roles:', roles);
+    const hasPermission = (permission) => permissions.includes(permission);
     
     const items = [];
     
@@ -31,7 +31,7 @@ const menuItems = computed(() => {
         route: 'dashboard',
         roles: ['super_admin', 'manager', 'marketing_officer', 'staff', 'customer']
     });
-    
+
     // HR Module - Super Admin & Manager
     if (hasAnyRole('super_admin', 'manager')) {
         items.push({
@@ -44,6 +44,30 @@ const menuItems = computed(() => {
             ]
         });
     }
+
+    // Users & Roles - Logic Breakdown
+    // Users List (Employees): Super Admin & Manager (and possibly others with view_employees if applicable)
+    // Roles List: ONLY Super Admin
+    
+    const usersItems = [];
+    
+    if (hasAnyRole('super_admin', 'manager')) {
+         usersItems.push({ name: 'Users List', route: 'users.index' });
+    }
+    
+    if (hasRole('super_admin')) {
+         usersItems.push({ name: 'Roles List', route: 'roles.index' });
+    }
+
+    if (usersItems.length > 0) {
+        items.push({
+            name: 'Users',
+            icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+            children: usersItems
+        });
+    }
+
+
     
     // Inventory - Super Admin & Manager
     if (hasAnyRole('super_admin', 'manager')) {
@@ -139,6 +163,48 @@ const menuItems = computed(() => {
     });
 });
 
+
+const activeMenu = ref(null);
+
+const toggleMenu = (menuName) => {
+    if (activeMenu.value === menuName) {
+        activeMenu.value = null; // Collapse if already open
+    } else {
+        activeMenu.value = menuName; // Expand clicked menu
+    }
+};
+
+// Check if a child route is active to set initial activeMenu
+const checkActiveMenu = () => {
+    // We can't access menuItems.value directly inside setup before it's computed? 
+    // Actually we can watch the route.
+    const currentRoute = route().current();
+    if (!currentRoute) return;
+
+    // Iterate through computed menu items to find containing group
+    // We need to access the computed value, which might be tricky if it depends on ref updates.
+    // However, on mount/watch, we can iterate.
+    
+    menuItems.value.forEach(item => {
+        if (item.children) {
+            const hasActiveChild = item.children.some(child => route().current(child.route));
+            if (hasActiveChild) {
+                activeMenu.value = item.name;
+            }
+        }
+    });
+};
+
+import { onMounted, watch } from 'vue';
+import Toast from '@/Components/Toast.vue'; // Import Toast
+
+onMounted(() => {
+    checkActiveMenu();
+});
+
+// Watch for route changes to update active menu (optional, if you want it to auto-expand on navigation)
+// watch(() => page.url, () => checkActiveMenu()); 
+
 const logout = () => {
     router.post(route('logout'));
 };
@@ -175,30 +241,38 @@ const logout = () => {
             <nav class="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
                 <template v-for="item in menuItems" :key="item.name">
                     <!-- Menu Group with Children -->
+                    <!-- Menu Group with Children -->
                     <div v-if="item.children" class="space-y-1">
-                        <!-- Group Header -->
-                        <div v-if="!sidebarCollapsed" class="px-4 py-2 text-xs font-semibold text-cyan-200 uppercase tracking-wider">
-                            {{ item.name }}
-                        </div>
-                         <!-- Icon only for collapsed group header (optional, or just show children) -->
-                        <div v-else class="flex justify-center py-2 text-cyan-200">
-                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"/>
-                            </svg>
+                        <!-- Group Header - Clickable for toggle -->
+                        <div @click="toggleMenu(item.name)" 
+                             class="flex items-center justify-between px-4 py-2 cursor-pointer text-gray-300 hover:bg-[#004062] hover:text-white transition-colors rounded-lg group">
+                            
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon"/>
+                                </svg>
+                                <span v-show="!sidebarCollapsed" class="ml-3 font-medium">{{ item.name }}</span>
+                            </div>
+
+                            <!-- Expand/Collapse Icon -->
+                            <div v-show="!sidebarCollapsed">
+                                <svg :class="['w-4 h-4 transition-transform duration-200', activeMenu === item.name ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
                         </div>
 
-                        <div class="space-y-1">
+                        <!-- Children Container - Show only if activeMenu matches -->
+                        <div v-show="activeMenu === item.name && !sidebarCollapsed" class="space-y-1 pl-11 pr-2">
                             <Link v-for="child in item.children" :key="child.name" :href="route(child.route)"
                                 :class="[
-                                    'flex items-center px-4 py-2 text-sm text-gray-300 rounded-lg hover:bg-[#004062] hover:text-white transition-colors',
-                                    route().current(child.route) ? 'bg-[#004d7a] text-white border-l-4 border-cyan-400' : ''
+                                    'flex items-center px-4 py-2 text-sm text-gray-400 rounded-lg hover:text-white transition-colors block',
+                                    route().current(child.route) ? 'text-white font-medium' : ''
                                 ]">
-                                <span v-if="sidebarCollapsed" class="w-full text-center" :title="child.name">
-                                     {{ child.name.charAt(0) }}
-                                </span>
-                                <span v-else>{{ child.name }}</span>
+                                <span>{{ child.name }}</span>
                             </Link>
                         </div>
+                         <!-- Mobile/Collapsed View: Show Children in Popover or similar? For now simple collapse behavior is fine, or we can just show icon without expansion for collapsed state -->
                     </div>
 
                     <!-- Single Menu Item -->
@@ -289,4 +363,5 @@ const logout = () => {
         </div>
 
     </div>
+    <Toast :flash="$page.props.flash" />
 </template>

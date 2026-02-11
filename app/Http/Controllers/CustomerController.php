@@ -31,7 +31,9 @@ class CustomerController extends Controller
 
     public function create()
     {
-        return Inertia::render('Customers/Create');
+        return Inertia::render('Customers/Create', [
+            'roles' => \Spatie\Permission\Models\Role::all()
+        ]);
     }
 
     public function store(Request $request)
@@ -46,12 +48,15 @@ class CustomerController extends Controller
             'credit_limit' => 'nullable|numeric|min:0',
             'opening_balance' => 'nullable|numeric|min:0',
             'status' => 'required|in:active,inactive',
+            'role' => 'nullable|exists:roles,name', // Optional, default to customer
         ]);
 
         // Auto-generate Customer Code
         $latest = Customer::orderBy('id', 'desc')->first();
         $nextId = $latest ? $latest->id + 1 : 1;
         $validated['customer_code'] = 'CUS-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+        
+        $roleInfo = $validated['role'] ?? 'customer';
 
         // Create User
         $user = \App\Models\User::create([
@@ -60,9 +65,11 @@ class CustomerController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'password' => \Illuminate\Support\Facades\Hash::make('123456'),
-            'role' => 'customer',
+            'role' => $roleInfo,
             'status' => 'active',
         ]);
+        
+        $user->assignRole($roleInfo);
 
         $validated['user_id'] = $user->id;
 
@@ -73,8 +80,12 @@ class CustomerController extends Controller
 
     public function edit(Customer $customer)
     {
+        $customer->load('user.roles');
+
         return Inertia::render('Customers/Edit', [
             'customer' => $customer,
+            'roles' => \Spatie\Permission\Models\Role::all(),
+            'userRole' => $customer->user ? $customer->user->roles->first()?->name : null
         ]);
     }
 
@@ -91,7 +102,15 @@ class CustomerController extends Controller
             'credit_limit' => 'nullable|numeric|min:0',
             'opening_balance' => 'nullable|numeric|min:0',
             'status' => 'required|in:active,inactive',
+            'role' => 'nullable|exists:roles,name',
         ]);
+        
+        // Update User Role if changed
+        if ($customer->user) {
+            $roleInfo = $validated['role'] ?? 'customer';
+            $customer->user->syncRoles([$roleInfo]);
+            $customer->user->update(['role' => $roleInfo]);
+        }
 
         $customer->update($validated);
 

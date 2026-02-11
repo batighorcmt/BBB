@@ -37,8 +37,22 @@ const addItem = () => {
 // Initial item
 addItem();
 
+import Swal from 'sweetalert2';
+
 const removeItem = (index) => {
-    form.items.splice(index, 1);
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.items.splice(index, 1);
+        }
+    });
 };
 
 const onItemSelected = (index) => {

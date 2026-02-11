@@ -30,7 +30,9 @@ class EmployeeController extends Controller
 
     public function create()
     {
-        return Inertia::render('Employees/Create');
+        return Inertia::render('Employees/Create', [
+            'roles' => \Spatie\Permission\Models\Role::all()
+        ]);
     }
 
     public function store(Request $request)
@@ -45,6 +47,7 @@ class EmployeeController extends Controller
             'status' => 'required|in:active,inactive,terminated',
             'address' => 'nullable|string',
             'employment_type' => 'required|in:permanent,contractual,daily_wage',
+            'role' => 'required|exists:roles,name',
         ]);
 
         // Generate Employee Code
@@ -62,9 +65,11 @@ class EmployeeController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'password' => \Illuminate\Support\Facades\Hash::make('123456'),
-            'role' => 'employee',
+            'role' => $validated['role'], // Store in column too for quick access
             'status' => 'active',
         ]);
+        
+        $user->assignRole($validated['role']);
 
         $validated['user_id'] = $user->id;
         
@@ -75,8 +80,12 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee)
     {
+        $employee->load('user.roles');
+        
         return Inertia::render('Employees/Edit', [
             'employee' => $employee,
+            'roles' => \Spatie\Permission\Models\Role::all(),
+            'userRole' => $employee->user ? $employee->user->roles->first()?->name : null
         ]);
     }
 
@@ -93,7 +102,14 @@ class EmployeeController extends Controller
             'status' => 'required|in:active,inactive,terminated',
             'address' => 'nullable|string',
             'employment_type' => 'required|in:permanent,contractual,daily_wage',
+            'role' => 'required|exists:roles,name',
         ]);
+        
+        // Update User Role if changed
+        if ($employee->user) {
+            $employee->user->syncRoles([$validated['role']]);
+            $employee->user->update(['role' => $validated['role']]); // Update redundant column
+        }
 
         $employee->update($validated);
 

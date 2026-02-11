@@ -21,10 +21,31 @@ watch([search, typeFilter], throttle(([searchValue, typeValue]) => {
     );
 }, 300));
 
+import Swal from 'sweetalert2';
+
 const deleteItem = (id) => {
-    if (confirm('Are you sure you want to delete this item?')) {
-        router.delete(route('items.destroy', id));
-    }
+     Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('items.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                     Swal.fire(
+                        'Deleted!',
+                        'Item has been deleted.',
+                        'success'
+                    )
+                }
+            });
+        }
+    });
 };
 </script>
 

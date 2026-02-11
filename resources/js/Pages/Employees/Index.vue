@@ -20,10 +20,22 @@ watch(search, throttle((value) => {
     );
 }, 300));
 
+import Swal from 'sweetalert2';
+
 const deleteEmployee = (id) => {
-    if (confirm('Are you sure you want to delete this employee?')) {
-        router.delete(route('employees.destroy', id));
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('employees.destroy', id));
+        }
+    });
 };
 </script>
 
