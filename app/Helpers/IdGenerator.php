@@ -19,7 +19,8 @@ class IdGenerator
     {
         $query = $model::query();
         
-        if (method_exists($model, 'withTrashed')) {
+        $traits = class_uses_recursive($model);
+        if (in_array('Illuminate\Database\Eloquent\SoftDeletes', $traits)) {
             $query->withTrashed();
         }
         

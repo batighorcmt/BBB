@@ -265,19 +265,30 @@ class SaleController extends Controller
     {
         DB::beginTransaction();
         try {
-            // Reverse customer balance
+            // 1. Reverse status in Production & Quotation
+            if ($sale->production) {
+                $sale->production->update(['status' => 'completed']);
+                if ($sale->production->quotation) {
+                    $sale->production->quotation->update(['status' => 'production_ready']);
+                }
+            }
+
+            // 2. Reverse customer balance
             $customer = $sale->customer;
             if ($customer) {
                 $customer->current_balance -= $sale->due_amount;
                 $customer->save();
             }
 
-            $sale->delete();
+            // 3. Force delete because we want to reuse sale_no and fulfill "delete everything"
+            // This also handles sale_items if they are not soft-deleted (which they aren't currently)
+            $sale->forceDelete();
+
             DB::commit();
-            return redirect()->route('sales.index')->with('success', 'Sale deleted and customer balance adjusted.');
+            return redirect()->route('sales.index')->with('success', 'Sale deleted and all related records reversed.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Delete failed: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Delete and reversal failed: ' . $e->getMessage()]);
         }
     }
 }
