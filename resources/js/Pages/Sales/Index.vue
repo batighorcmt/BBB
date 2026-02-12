@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { throttle } from 'lodash';
 import Swal from 'sweetalert2';
 
@@ -13,6 +13,20 @@ const props = defineProps({
 const search = ref(props.filters?.search || '');
 const showPaymentModal = ref(false);
 const selectedSale = ref(null);
+const activeDropdownId = ref(null);
+
+const toggleDropdown = (event, id) => {
+    event.stopPropagation();
+    activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+
+onMounted(() => {
+    const closeDropdown = () => {
+        activeDropdownId.value = null;
+    };
+    window.addEventListener('click', closeDropdown);
+    return () => window.removeEventListener('click', closeDropdown);
+});
 
 const paymentForm = useForm({
     amount: '',
@@ -141,7 +155,7 @@ const printSale = (id) => {
                         </div>
 
                         <!-- Table -->
-                        <div class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="overflow-x-auto lg:overflow-visible shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg border border-gray-200 dark:border-gray-700">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-100 dark:bg-gray-700">
                                     <tr>
@@ -176,12 +190,17 @@ const printSale = (id) => {
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
-                                            <div class="relative inline-block text-left group">
-                                                <button class="inline-flex justify-center w-full px-3 py-1.5 text-xs font-bold text-white bg-[#00334e] rounded-md hover:bg-[#00283d] transition-all shadow-sm active:scale-95">
+                                            <div class="relative inline-block text-left">
+                                                <button @click.stop="(e) => toggleDropdown(e, sale.id)" class="inline-flex justify-center w-full px-3 py-1.5 text-xs font-bold text-white bg-[#00334e] rounded-md hover:bg-[#00283d] transition-all shadow-sm active:scale-95">
                                                     Action
                                                     <svg class="-mr-1 ml-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                                                 </button>
-                                                <div class="origin-top-right absolute right-0 mt-0 pt-2 w-48 z-50 hidden group-hover:block hover:block transform transition-all duration-200">
+                                                <!-- Dynamic Positioning: Open upwards if in the bottom rows -->
+                                                <div v-show="activeDropdownId === sale.id"
+                                                     :class="[
+                                                        'absolute right-0 w-48 z-50 transform transition-all duration-200',
+                                                        index >= sales.data.length - 2 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full origin-top-right mt-0 pt-2'
+                                                     ]">
                                                     <div class="rounded-lg shadow-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 py-1 overflow-hidden ring-1 ring-black ring-opacity-10">
                                                         <Link :href="route('sales.show', sale.id)" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                                             <svg class="w-4 h-4 text-[#00334e] dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
