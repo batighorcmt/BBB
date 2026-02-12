@@ -17,7 +17,13 @@ class IdGenerator
      */
     public static function generate($model, $field, $prefix, $padding = 5)
     {
-        $latest = $model::withTrashed()->orderBy('id', 'desc')->first();
+        $query = $model::query();
+        
+        if (method_exists($model, 'withTrashed')) {
+            $query->withTrashed();
+        }
+        
+        $latest = $query->orderBy('id', 'desc')->first();
         
         $nextId = $latest ? $latest->id + 1 : 1;
         
