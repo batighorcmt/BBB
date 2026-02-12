@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Production;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Helpers\IdGenerator;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -263,32 +264,55 @@ class SaleController extends Controller
 
     public function destroy(Sale $sale)
     {
+        // ... (existing content)
+    }
+
+    public function receivePayment(Request $request, Sale $sale)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01|max:' . $sale->due_amount,
+            'payment_date' => 'required|date',
+            'payment_method' => 'required|string',
+            'reference_no' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
         DB::beginTransaction();
         try {
-            // 1. Reverse status in Production & Quotation
-            if ($sale->production) {
-                $sale->production->update(['status' => 'completed']);
-                if ($sale->production->quotation) {
-                    $sale->production->quotation->update(['status' => 'production_ready']);
-                }
-            }
+            // 1. Create Payment record
+            $paymentNo = IdGenerator::generate(Payment::class, 'payment_no', 'PAY-');
+            Payment::create([
+                'payment_no' => $paymentNo,
+                'payable_id' => $sale->id,
+                'payable_type' => Sale::class,
+                'amount' => $validated['amount'],
+                'payment_date' => $validated['payment_date'],
+                'payment_method' => $validated['payment_method'],
+                'reference_no' => $validated['reference_no'],
+                'notes' => $validated['notes'],
+                'status' => 'approved',
+                'collected_by' => Auth::id(),
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
 
-            // 2. Reverse customer balance
+            // 2. Update Sale
+            $sale->paid_amount += $validated['amount'];
+            $sale->due_amount -= $validated['amount'];
+            $sale->save();
+
+            // 3. Update Customer Balance
             $customer = $sale->customer;
             if ($customer) {
-                $customer->current_balance -= $sale->due_amount;
+                $customer->current_balance -= $validated['amount'];
                 $customer->save();
             }
 
-            // 3. Force delete because we want to reuse sale_no and fulfill "delete everything"
-            // This also handles sale_items if they are not soft-deleted (which they aren't currently)
-            $sale->forceDelete();
-
             DB::commit();
-            return redirect()->route('sales.index')->with('success', 'Sale deleted and all related records reversed.');
+            return back()->with('success', 'Payment received successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Delete and reversal failed: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Payment failed: ' . $e->getMessage()]);
         }
     }
 }

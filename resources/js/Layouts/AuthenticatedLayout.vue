@@ -219,7 +219,7 @@ const logout = () => {
         
         <!-- Sidebar - Flexible Item -->
         <aside :class="[
-            'bg-[#00334e] text-white transition-all duration-300 ease-in-out flex flex-col flex-shrink-0',
+            'bg-[#00334e] text-white transition-all duration-300 ease-in-out flex flex-col flex-shrink-0 print:hidden',
             // Mobile: Fixed, overlaid
             'fixed lg:static inset-y-0 left-0 z-30 h-full',
             // Mobile transform
@@ -297,7 +297,7 @@ const logout = () => {
         <div class="flex flex-col flex-1 overflow-hidden">
             
             <!-- Header -->
-            <header class="h-16 bg-[#00334e] border-b border-[#00283d] flex items-center justify-between px-6 flex-shrink-0 shadow-md">
+            <header class="h-16 bg-[#00334e] border-b border-[#00283d] flex items-center justify-between px-6 flex-shrink-0 shadow-md print:hidden">
                 
                 <!-- Left Side: Mobile Hamburger & Title/Breadcrumbs -->
                 <div class="flex items-center">
@@ -347,7 +347,7 @@ const logout = () => {
             </header>
 
             <!-- Page Heading -->
-            <header class="bg-white dark:bg-gray-800 shadow relative z-10" v-if="$slots.header">
+            <header class="bg-white dark:bg-gray-800 shadow relative z-10 print:hidden" v-if="$slots.header">
                 <div class="w-full mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     <slot name="header" />
                 </div>

@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['can:view_sales'])->group(function () {
         Route::resource('sales', \App\Http\Controllers\SaleController::class);
+        Route::post('/sales/{sale}/receive-payment', [\App\Http\Controllers\SaleController::class, 'receivePayment'])->name('sales.receive-payment');
         Route::get('/api/productions/{id}', [\App\Http\Controllers\SaleController::class, 'getProductionDetails'])->name('api.productions.show');
     });
 
