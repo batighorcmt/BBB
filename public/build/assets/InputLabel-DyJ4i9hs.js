@@ -1,0 +1,1 @@
+import{c as t,t as o,r as n,o as e}from"./app-Cv-8DYvI.js";const r={class:"block font-medium text-sm text-gray-700 dark:text-gray-300"},l={key:0},c={key:1},p={__name:"InputLabel",props:{value:{type:String}},setup(a){return(s,_)=>(e(),t("label",r,[a.value?(e(),t("span",l,o(a.value),1)):(e(),t("span",c,[n(s.$slots,"default")]))]))}};export{p as _};
