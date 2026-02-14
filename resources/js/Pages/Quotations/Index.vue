@@ -36,6 +36,25 @@ const deleteQuotation = (id) => {
     });
 };
 
+const updateStatus = (id, newStatus) => {
+    Swal.fire({
+        title: 'Change Status?',
+        text: `Update status to ${newStatus}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Yes, update'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.patch(route('quotations.status', id), { status: newStatus }, {
+                preserveScroll: true,
+                onSuccess: () => Swal.fire('Updated!', 'Status has been updated.', 'success')
+            });
+        }
+    });
+};
+
 const getStatusColor = (status) => {
     switch (status) {
         case 'pending': return 'bg-yellow-600';
@@ -129,9 +148,17 @@ const getStatusLabel = (status) => {
                                         <td class="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-center">{{ quotation.items_count }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-200 dark:border-gray-700 font-bold">{{ quotation.total }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-200 dark:border-gray-700 text-center">
-                                            <span :class="['px-2 py-1 text-xs font-bold text-white rounded', getStatusColor(quotation.status)]">
-                                                {{ getStatusLabel(quotation.status) }}
-                                            </span>
+                                            <select 
+                                                :value="quotation.status"
+                                                @change="updateStatus(quotation.id, $event.target.value)"
+                                                class="text-xs rounded border-gray-300 py-1 pr-8 focus:ring-indigo-500 focus:border-indigo-500 text-white font-bold"
+                                                :class="getStatusColor(quotation.status)">
+                                                <option value="pending" class="bg-white text-gray-900">Pending</option>
+                                                <option value="working" class="bg-white text-gray-900">Working</option>
+                                                <option value="production_ready" class="bg-white text-gray-900">Production Ready</option>
+                                                <option value="delivered" class="bg-white text-gray-900">Delivered</option>
+                                                <option value="cancelled" class="bg-white text-gray-900">Cancelled</option>
+                                            </select>
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
                                             <div class="relative inline-block text-left group">

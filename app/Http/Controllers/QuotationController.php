@@ -283,4 +283,15 @@ class QuotationController extends Controller
             'quotation' => $quotation
         ]);
     }
+
+    public function updateStatus(Request $request, Quotation $quotation)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:pending,working,production_ready,delivered,cancelled',
+        ]);
+
+        $quotation->update(['status' => $validated['status']]);
+
+        return back()->with('success', 'Status updated successfully.');
+    }
 }

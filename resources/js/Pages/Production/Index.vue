@@ -31,7 +31,7 @@ const updateStatus = (prodId, newStatus) => {
         confirmButtonText: 'Yes, update'
     }).then((result) => {
         if (result.isConfirmed) {
-            router.patch(route('production.update-status', prodId), { status: newStatus }, {
+            router.patch(route('production.status', prodId), { status: newStatus }, {
                 preserveScroll: true,
                 onSuccess: () => Swal.fire('Updated!', 'Status has been updated.', 'success')
             });

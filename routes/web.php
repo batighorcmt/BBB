@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Sales
     Route::middleware(['can:view_quotations'])->group(function () {
         Route::resource('quotations', \App\Http\Controllers\QuotationController::class);
+        Route::patch('/quotations/{quotation}/status', [\App\Http\Controllers\QuotationController::class, 'updateStatus'])->name('quotations.status');
     });
 
     Route::middleware(['can:view_sales'])->group(function () {
