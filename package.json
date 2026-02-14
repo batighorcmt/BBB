@@ -20,6 +20,7 @@
     "dependencies": {
         "lodash": "^4.17.23",
         "sweetalert2": "^11.26.18",
+        "vue-select": "^3.20.4",
         "vue-sweetalert2": "^5.0.11"
     }
 }

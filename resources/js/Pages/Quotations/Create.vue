@@ -5,6 +5,8 @@ import { ref, watch, computed } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import vSelect from 'vue-select';
+import 'vue-select/dist/vue-select.css';
 
 
 const props = defineProps({
@@ -141,10 +143,20 @@ const submit = () => {
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                 <div v-if="!isCustomer">
                                     <InputLabel for="customer_id" value="Customer" />
-                                    <select id="customer_id" v-model="form.customer_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
-                                        <option value="" disabled>Select Customer</option>
-                                        <option v-for="customer in customers" :key="customer.id" :value="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
-                                    </select>
+                                    <v-select 
+                                        id="customer_id" 
+                                        v-model="form.customer_id" 
+                                        :options="props.customers" 
+                                        :reduce="customer => customer.id" 
+                                        label="name"
+                                        placeholder="Select Customer"
+                                        class="mt-1 block w-full vue-select-custom"
+                                        required
+                                    >
+                                        <template #option="option">
+                                            {{ option.name }} ({{ option.phone }})
+                                        </template>
+                                    </v-select>
                                     <div v-if="form.errors.customer_id" class="text-red-500 text-xs mt-1">{{ form.errors.customer_id }}</div>
                                 </div>
                                 
@@ -166,35 +178,44 @@ const submit = () => {
                                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead>
                                         <tr>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Color</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">GSM</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Print Color</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase text-right">Qty</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase text-right">Rate</th>
-                                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase text-right">Total</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Item</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Size</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Color</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">GSM</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Print Color</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Rate</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
                                             <th></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-for="(item, index) in form.items" :key="index">
-                                            <td class="px-2 py-2 min-w-[200px]">
-                                                 <select v-model="item.item_id" @change="onItemSelected(index)" class="w-full border-gray-300 dark:border-gray-700 rounded-md shadow-sm text-sm" required>
-                                                    <option value="" disabled>Select Item</option>
-                                                    <option v-for="i in items" :key="i.id" :value="i.id">{{ i.name }} - {{ i.code }}</option>
-                                                </select>
-                                                <!-- Add actual search/autocomplete later -->
+                                            <td class="px-2 py-2 min-w-[250px]">
+                                                <v-select 
+                                                    v-model="item.item_id" 
+                                                    :options="props.items" 
+                                                    :reduce="i => i.id" 
+                                                    label="name"
+                                                    placeholder="Select Item"
+                                                    @update:modelValue="onItemSelected(index)"
+                                                    class="text-sm vue-select-custom"
+                                                    required
+                                                >
+                                                    <template #option="option">
+                                                        {{ option.name }} - {{ option.code }}
+                                                    </template>
+                                                </v-select>
                                             </td>
-                                            <td class="px-2 py-2"><input v-model="item.size" type="text" class="w-20 border-gray-300 rounded-md text-sm p-1" ></td>
-                                            <td class="px-2 py-2"><input v-model="item.color" type="text" class="w-20 border-gray-300 rounded-md text-sm p-1" ></td>
-                                            <td class="px-2 py-2"><input v-model="item.gsm" type="text" class="w-16 border-gray-300 rounded-md text-sm p-1" ></td>
-                                            <td class="px-2 py-2"><input v-model="item.print_color" type="text" class="w-20 border-gray-300 rounded-md text-sm p-1" ></td>
-                                            <td class="px-2 py-2"><input v-model="item.quantity" type="number" min="1" class="w-20 border-gray-300 rounded-md text-sm p-1 text-right" required @input="calculateRowTotal(index)"></td>
-                                            <td class="px-2 py-2">
-                                                <input v-model="item.unit_price" type="number" step="0.01" min="0" class="w-24 border-gray-300 rounded-md text-sm p-1 text-right" :readonly="isCustomer" @input="calculateRowTotal(index)" required>
+                                            <td class="px-2 py-2 text-center"><input v-model="item.size" type="text" class="w-20 border-gray-300 rounded-md text-sm p-1 text-center" ></td>
+                                            <td class="px-2 py-2 text-center"><input v-model="item.color" type="text" class="w-20 border-gray-300 rounded-md text-sm p-1 text-center" ></td>
+                                            <td class="px-2 py-2 text-center"><input v-model="item.gsm" type="text" class="w-16 border-gray-300 rounded-md text-sm p-1 text-center" ></td>
+                                            <td class="px-2 py-2 text-center"><input v-model="item.print_color" type="text" class="w-20 border-gray-300 rounded-md text-sm p-1 text-center" ></td>
+                                            <td class="px-2 py-2 text-center"><input v-model="item.quantity" type="number" min="1" class="w-20 border-gray-300 rounded-md text-sm p-1 text-center" required @input="calculateRowTotal(index)"></td>
+                                            <td class="px-2 py-2 text-center">
+                                                <input v-model="item.unit_price" type="number" step="0.01" min="0" class="w-24 border-gray-300 rounded-md text-sm p-1 text-center" :readonly="isCustomer" @input="calculateRowTotal(index)" required>
                                             </td>
-                                            <td class="px-2 py-2 text-right font-semibold">{{ item.total }}</td>
+                                            <td class="px-2 py-2 text-center font-semibold">{{ item.total }}</td>
                                             <td class="px-2 py-2">
                                                 <button type="button" @click="removeItem(index)" class="text-red-500 hover:text-red-700" v-if="form.items.length > 1">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -251,3 +272,26 @@ const submit = () => {
         </div>
     </AuthenticatedLayout>
 </template>
+<style>
+.vue-select-custom .vs__dropdown-toggle {
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 2px 0;
+}
+.dark .vue-select-custom .vs__dropdown-toggle {
+    border-color: #374151;
+    background-color: #111827;
+}
+.dark .vue-select-custom .vs__selected,
+.dark .vue-select-custom .vs__search {
+    color: #d1d5db;
+}
+.dark .vue-select-custom .vs__dropdown-menu {
+    background-color: #1f2937;
+    color: #d1d5db;
+}
+.dark .vue-select-custom .vs__dropdown-option--highlight {
+    background-color: #4f46e5;
+    color: #ffffff;
+}
+</style>
