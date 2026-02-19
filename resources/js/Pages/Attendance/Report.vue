@@ -178,9 +178,9 @@ const formatWorkHours = (minutes) => {
                 </div>
             </div>
         </div>
-        </div>
 
         <!-- Image Modal -->
+
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 no-print" @click="showModal = false">
             <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl" @click.stop>
                 <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
