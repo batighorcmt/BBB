@@ -13,10 +13,15 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'totalSales' => method_exists(Sale::class, 'count') ? Sale::count() : 0,
-            'pendingOrders' => method_exists(Sale::class, 'where') ? Sale::where('status', 'pending')->count() : 0,
-            'totalCustomers' => method_exists(Customer::class, 'count') ? Customer::count() : 0,
-            'lowStockItems' => method_exists(Stock::class, 'whereRaw') ? Stock::whereRaw('quantity <= 10')->count() : 0,
+            'totalSalesAmount' => \App\Models\Sale::sum('grand_total'),
+            'totalSalesDue' => \App\Models\Sale::sum('due_amount'),
+            'totalPurchaseAmount' => \App\Models\Purchase::sum('total'),
+            'totalPurchaseDue' => \App\Models\Purchase::sum('due'),
+            'pendingQuotations' => \App\Models\Quotation::where('status', 'pending')->count(),
+            'activeCustomers' => \App\Models\Customer::where('status', 'active')->count(),
+            'totalSales' => \App\Models\Sale::count(),
+            'totalCustomers' => \App\Models\Customer::count(),
+            'lowStockItems' => \App\Models\Stock::whereRaw('quantity <= 10')->count(),
         ];
 
         return Inertia::render('Dashboard', [
@@ -24,3 +29,4 @@ class DashboardController extends Controller
         ]);
     }
 }
+
