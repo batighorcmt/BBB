@@ -97,9 +97,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Attendance
-    Route::middleware(['can:view_attendance'])->group(function () {
-        Route::get('/attendance', fn() => Inertia::render('ComingSoon', ['module' => 'Attendance']))->name('attendance.index');
+    Route::get('/attendance', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance', [\App\Http\Controllers\AttendanceController::class, 'store'])->name('attendance.store');
+    
+    Route::middleware(['role:super_admin'])->group(function () {
+        Route::get('/attendance/reports', [\App\Http\Controllers\AttendanceController::class, 'reports'])->name('attendance.reports');
     });
+
 });
 
 require __DIR__.'/auth.php';
