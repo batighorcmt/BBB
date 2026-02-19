@@ -106,7 +106,23 @@ defineProps({
                             </div>
                         </div>
                     </div>
+
+                    <!-- Low Stock Items -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-gray-500">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-gray-100 dark:bg-gray-900/30 text-gray-600">
+                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">লো স্টক আইটেম</p>
+                                <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ stats?.lowStockItems || 0 }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
 
 
                 <!-- Welcome Message -->
