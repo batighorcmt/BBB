@@ -98,7 +98,10 @@ const getStatusBadge = (status) => {
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300">{{ att.employee.employee_code }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-medium">{{ att.employee.name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300">{{ att.date }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-medium">
+                                        {{ new Date(att.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}
+                                    </td>
+
                                     <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-mono text-sm text-green-600 font-bold">{{ att.check_in }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-mono text-sm text-red-600 font-bold">{{ att.check_out || '--:--:--' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-xs">

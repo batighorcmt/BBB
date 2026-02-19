@@ -24,10 +24,11 @@ class Attendance extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
     ];
+
 
     public function employee()
     {
