@@ -42,11 +42,14 @@ const formatTime = (time) => {
 };
 
 const formatWorkHours = (minutes) => {
-    if (!minutes) return '-';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
+    if (minutes === null || minutes === undefined || minutes === '') return '-';
+    const totalMinutes = Math.abs(parseInt(minutes)) || 0;
+    if (totalMinutes === 0) return '0h 0m';
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
     return `${h}h ${m}m`;
 };
+
 </script>
 
 <template>
@@ -175,8 +178,24 @@ const formatWorkHours = (minutes) => {
                 </div>
             </div>
         </div>
+        </div>
+
+        <!-- Image Modal -->
+        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 no-print" @click="showModal = false">
+            <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl" @click.stop>
+                <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="font-bold dark:text-white">Attendance Photo</h3>
+                    <button @click="showModal = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 font-bold">Close</button>
+                </div>
+                <div class="p-2">
+                    <img :src="modalImage" class="max-w-full h-auto rounded mx-auto" alt="Attendance Photo" />
+                </div>
+            </div>
+        </div>
+
     </AuthenticatedLayout>
 </template>
+
 
 <style>
 @media print {

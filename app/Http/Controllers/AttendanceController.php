@@ -76,7 +76,7 @@ class AttendanceController extends Controller
                 // Calculate work hours
                 $checkInDateTime = \Carbon\Carbon::parse($attendance->date->format('Y-m-d') . ' ' . $attendance->check_in);
                 $checkOutDateTime = now();
-                $workHours = $checkOutDateTime->diffInMinutes($checkInDateTime);
+                $workHours = abs($checkOutDateTime->diffInMinutes($checkInDateTime));
 
                 $attendance->update([
                     'check_out' => $time,
