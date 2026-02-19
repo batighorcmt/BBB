@@ -1,0 +1,17 @@
+Columns in attendances table:
+- id
+- employee_id
+- date
+- check_in
+- check_out
+- work_hours
+- status
+- photo_path
+- latitude
+- longitude
+- location_address
+- notes
+- created_at
+- updated_at
+
+Current Database: jorepuku_bilashi
