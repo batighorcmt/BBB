@@ -1,15 +1,22 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     attendances: Array,
+    matrix: Array,
+    daysInMonth: Number,
     filters: Object,
 });
 
 const filterDate = ref(props.filters.date || '');
 const filterMonth = ref(props.filters.month || '');
+const showModal = ref(false);
+const modalImage = ref('');
+
+const isMonthlyView = computed(() => !!filterMonth.value && props.matrix?.length > 0);
+
 
 const handleFilter = () => {
     router.get(route('attendance.reports'), {
@@ -22,13 +29,23 @@ const printReport = () => {
     window.print();
 };
 
-const getStatusBadge = (status) => {
-    switch (status) {
-        case 'present': return 'bg-green-100 text-green-800';
-        case 'late': return 'bg-yellow-100 text-yellow-800';
-        case 'absent': return 'bg-red-100 text-red-800';
-        default: return 'bg-gray-100 text-gray-800';
+const openImageModal = (image) => {
+    if (image) {
+        modalImage.value = '/storage/' + image;
+        showModal.value = true;
     }
+};
+
+const formatTime = (time) => {
+    if (!time) return '--:--:--';
+    return time;
+};
+
+const formatWorkHours = (minutes) => {
+    if (!minutes) return '-';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
 };
 </script>
 
@@ -78,39 +95,77 @@ const getStatusBadge = (status) => {
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Matrix View -->
+                        <table v-if="isMonthlyView" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Photo</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Staff Code</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Check In</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Check Out</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                                    <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300 uppercase sticky left-0 bg-gray-50 dark:bg-gray-700 z-10">Employee</th>
+                                    <th v-for="day in daysInMonth" :key="day" class="px-1 py-2 text-center font-medium text-gray-500 dark:text-gray-300">{{ day }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 uppercase">
+                                <tr v-for="row in matrix" :key="row.employee.id">
+                                    <td class="px-2 py-2 whitespace-nowrap dark:text-gray-300 font-bold sticky left-0 bg-white dark:bg-gray-800 z-10 border-r">
+                                        {{ row.employee.name }}
+                                    </td>
+                                    <td v-for="day in daysInMonth" :key="day" class="px-1 py-2 text-center border-r last:border-0" :class="row.days[day].status === 'P' ? 'text-green-600 font-bold' : 'text-red-400 opacity-50'">
+                                        {{ row.days[day].status }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- List View -->
+                        <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Staff Name (Code)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap text-center">Check IN</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap text-center">Check OUT</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap text-center">Work Hours</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap text-center">Location</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap text-center">Photo</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <tr v-for="att in attendances" :key="att.id">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <img v-if="att.photo_path" :src="'/storage/' + att.photo_path" class="h-10 w-10 rounded-full object-cover border" />
-                                        <span v-else class="text-gray-400">N/A</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300">{{ att.employee.employee_code }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-medium">{{ att.employee.name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-medium">
                                         {{ new Date(att.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }}
                                     </td>
-
-                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-mono text-sm text-green-600 font-bold">{{ att.check_in }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-mono text-sm text-red-600 font-bold">{{ att.check_out || '--:--:--' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-xs">
-                                        <a v-if="att.latitude" :href="`https://www.google.com/maps?q=${att.latitude},${att.longitude}`" target="_blank" class="text-blue-600 hover:underline">
-                                            Maps View
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 font-medium">
+                                        {{ att.employee.name }} ({{ att.employee.employee_code }})
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-center font-mono text-green-600 font-bold">
+                                        {{ att.check_in }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-center font-mono text-red-600 font-bold">
+                                        {{ formatTime(att.check_out) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-center font-bold">
+                                        {{ formatWorkHours(att.work_hours) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-center space-x-2 no-print">
+                                        <a v-if="att.check_in_latitude" :href="`https://www.google.com/maps?q=${att.check_in_latitude},${att.check_in_longitude}`" target="_blank" class="text-blue-500 text-xs hover:underline">
+                                            IN Link
                                         </a>
-                                        <span v-else>No GPS</span>
+                                        <span v-else class="text-gray-400">-</span>
+                                        <span class="text-gray-300">|</span>
+                                        <a v-if="att.check_out_latitude" :href="`https://www.google.com/maps?q=${att.check_out_latitude},${att.check_out_longitude}`" target="_blank" class="text-red-500 text-xs hover:underline">
+                                            OUT Link
+                                        </a>
+                                        <span v-else class="text-gray-400">-</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap dark:text-gray-300 text-center space-x-3 no-print">
+                                        <button v-if="att.check_in_photo" @click="openImageModal(att.check_in_photo)" class="text-blue-500 hover:text-blue-700">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        </button>
+                                        <button v-if="att.check_out_photo" @click="openImageModal(att.check_out_photo)" class="text-red-500 hover:text-red-700">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        </button>
                                     </td>
                                 </tr>
+
                                 <tr v-if="attendances.length === 0">
                                     <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">কোনো হাজিরা পাওয়া যায়নি।</td>
                                 </tr>

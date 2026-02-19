@@ -49,7 +49,7 @@ class AttendanceController extends Controller
         $time = now()->format('H:i:s');
 
         $attendance = Attendance::where('employee_id', $employee->id)
-            ->where('date', $date)
+            ->whereDate('date', $date)
             ->first();
 
         // Handle Image
@@ -65,17 +65,26 @@ class AttendanceController extends Controller
                 'date' => $date,
                 'check_in' => $time,
                 'status' => 'present',
-                'photo_path' => $fileName,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'location_address' => $request->location_address,
+                'check_in_photo' => $fileName,
+                'check_in_latitude' => $request->latitude,
+                'check_in_longitude' => $request->longitude,
+                'check_in_address' => $request->location_address,
             ]);
             return back()->with('success', 'Checked in successfully.');
         } else {
             if (!$attendance->check_out) {
+                // Calculate work hours
+                $checkInDateTime = \Carbon\Carbon::parse($attendance->date->format('Y-m-d') . ' ' . $attendance->check_in);
+                $checkOutDateTime = now();
+                $workHours = $checkOutDateTime->diffInMinutes($checkInDateTime);
+
                 $attendance->update([
                     'check_out' => $time,
-                    'work_hours' => now()->diffInMinutes($attendance->date->format('Y-m-d') . ' ' . $attendance->check_in),
+                    'work_hours' => $workHours,
+                    'check_out_photo' => $fileName,
+                    'check_out_latitude' => $request->latitude,
+                    'check_out_longitude' => $request->longitude,
+                    'check_out_address' => $request->location_address,
                 ]);
                 return back()->with('success', 'Checked out successfully.');
             }
@@ -87,18 +96,50 @@ class AttendanceController extends Controller
     {
         $query = Attendance::with('employee')->orderBy('date', 'desc');
 
-        if ($request->has('date')) {
-            $query->where('date', $request->date);
+        if ($request->filled('date')) {
+            $query->whereDate('date', $request->date);
         }
 
-        if ($request->has('month')) {
-            $query->whereMonth('date', date('m', strtotime($request->month)))
-                  ->whereYear('date', date('Y', strtotime($request->month)));
+        if ($request->filled('month')) {
+            $date = \Carbon\Carbon::parse($request->month);
+            $query->whereMonth('date', $date->month)
+                  ->whereYear('date', $date->year);
+        }
+
+        $attendances = $query->get();
+
+        // If monthly view, prepare matrix data
+        $matrix = [];
+        if ($request->filled('month')) {
+            $date = \Carbon\Carbon::parse($request->month);
+            $daysInMonth = $date->daysInMonth;
+            $employees = Employee::where('deleted_at', null)->get();
+            
+            foreach ($employees as $emp) {
+                $empAttendance = [];
+                for ($i = 1; $i <= $daysInMonth; $i++) {
+                    $d = $date->copy()->day($i)->format('Y-m-d');
+                    $att = $attendances->where('employee_id', $emp->id)->where('date', $d)->first();
+                    $empAttendance[$i] = $att ? [
+                        'status' => 'P',
+                        'check_in' => $att->check_in,
+                        'check_out' => $att->check_out,
+                    ] : ['status' => 'A'];
+                }
+                $matrix[] = [
+                    'employee' => $emp,
+                    'days' => $empAttendance
+                ];
+            }
         }
 
         return Inertia::render('Attendance/Report', [
-            'attendances' => $query->get(),
+            'attendances' => $attendances,
+            'matrix' => $matrix,
+            'daysInMonth' => $request->filled('month') ? \Carbon\Carbon::parse($request->month)->daysInMonth : 0,
             'filters' => $request->only(['date', 'month']),
         ]);
     }
+
+
 }
